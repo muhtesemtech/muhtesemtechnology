@@ -47,6 +47,24 @@ const LiveJobs: React.FC = () => {
     }
   }, []);
 
+  // Listen for storage events to sync across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'muhtesem_saved_jobs' && e.newValue) {
+        try {
+           const parsed = JSON.parse(e.newValue);
+           if (Array.isArray(parsed)) {
+             setSavedJobIds(new Set(parsed));
+           }
+        } catch (err) {
+           console.error("Failed to sync saved jobs", err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const showToast = (message: string, type: 'success' | 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -417,6 +435,7 @@ const LiveJobs: React.FC = () => {
                             : 'bg-white/80 hover:bg-white text-gray-400 hover:text-vivid-red'
                         }`}
                         title={savedJobIds.has(job.id) ? "Unsave job" : "Save job"}
+                        aria-label={savedJobIds.has(job.id) ? "Unsave job" : "Save job"}
                     >
                         <Bookmark className={`w-3.5 h-3.5 ${savedJobIds.has(job.id) ? 'fill-current' : ''}`} />
                     </button>
@@ -428,6 +447,7 @@ const LiveJobs: React.FC = () => {
                         }}
                         className="absolute top-2 right-2 bg-white/80 hover:bg-white text-gray-500 hover:text-vivid-red p-1.5 rounded-full transition-all backdrop-blur-sm z-20 opacity-0 group-hover:opacity-100 shadow-sm"
                         title="Share this job"
+                        aria-label="Share this job"
                     >
                         <Share2 className="w-3.5 h-3.5" />
                     </button>
